@@ -1,9 +1,10 @@
+import 'dart:io';
 import 'package:demo/model/transaction.dart';
 import 'package:demo/widget/new_Transaction.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'widget/transaction_List.dart';
-import 'widget/user_transaction.dart';
 import './widget/chart.dart';
 
 void main() {
@@ -28,32 +29,21 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'BalsamiqSans',
         textTheme: ThemeData.light().textTheme.copyWith(
-            titleLarge: const TextStyle(
-                fontFamily: 'BalsamiqSans',
-                fontSize: 20,
-                fontWeight: FontWeight.bold)),
-        appBarTheme: AppBarTheme(
-          toolbarTextStyle: ThemeData.light()
-              .textTheme
-              .copyWith(
-                titleLarge: const TextStyle(
+              titleLarge: const TextStyle(
                   fontFamily: 'BalsamiqSans',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                ),
-              )
-              .bodyText2,
-          titleTextStyle: ThemeData.light()
-              .textTheme
-              .copyWith(
-                titleMedium: const TextStyle(
+                  color: Colors.white),
+              titleMedium: const TextStyle(
+                  fontFamily: 'BalsamiqSans',
+                  fontSize: 16,
+                  color: Colors.black),
+              titleSmall: const TextStyle(
                   fontFamily: 'BalsamiqSans',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                ),
-              )
-              .headline6,
-        ),
+                  color: Colors.black),
+            ),
       ),
       home: MyHomePage(),
     );
@@ -61,11 +51,13 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final List<Transaction> _userTransactions = [
     // Transaction(
     //   id: 'T1',
@@ -81,6 +73,27 @@ class _MyHomePageState extends State<MyHomePage> {
     // ),
   ];
 
+  // it is used for switch
+  bool _showChart = false;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance!.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
+  }
+
+  // add new transaction
   void _addNewTrasaction(String txTitle, double txAmount, DateTime chodenDate) {
     final newTx = Transaction(
       title: txTitle,
@@ -95,6 +108,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _startAddNewTransaction(BuildContext ctx) {
+    //
+    // open input slide from bottom side
     showModalBottomSheet(
       context: ctx,
       builder: (_) {
@@ -107,6 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+// delete add data from device
   void _deleteTransaction(String id) {
     // print(id);
     setState(() {
@@ -114,6 +130,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+//
+// eter methode which is used for to get last 7 days chart data and chart list
   List<Transaction> get _recentTransactions {
     return _userTransactions.where((tx) {
       return tx.date.isAfter(
@@ -124,10 +142,41 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
-  bool _showChart = false;
-
   @override
   Widget build(BuildContext context) {
+    /* make widget here for appBar calling 
+     then i used this widget directly into 
+     my app where i called this appBar widget*/
+
+    Widget _buildAppBar() {
+      return Platform.isIOS
+          ? CupertinoNavigationBar(
+              middle: const Text('Expense App'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    child: const Icon(CupertinoIcons.add),
+                    onTap: () => _startAddNewTransaction(context),
+                  )
+                ],
+              ),
+            )
+          : AppBar(
+              title: Text(
+                'Expense App',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              actions: <Widget>[
+                IconButton(
+                  onPressed: () => _startAddNewTransaction(context),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            );
+    }
+
     //
     // i used mediaQuery variable here to replace MediaQuery.of(context)
     final mediaQuery = MediaQuery.of(context);
@@ -136,23 +185,9 @@ class _MyHomePageState extends State<MyHomePage> {
      Landscape mode = we used switch here to change chart to transaction list
       and transaction list to chart*/
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
-
-//AppBar widget
-    final appBar = AppBar(
-      title: Text(
-        'Expense App',
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-      actions: <Widget>[
-        IconButton(
-          onPressed: () => _startAddNewTransaction(context),
-          icon: const Icon(Icons.add),
-        ),
-      ],
-    );
-
-//transaction list
+    //AppBar widget
+    final dynamic appBar = _buildAppBar();
+    //transaction list
     final txListWidget = SizedBox(
       height: (mediaQuery.size.height -
               appBar.preferredSize.height -
@@ -161,58 +196,85 @@ class _MyHomePageState extends State<MyHomePage> {
       child: TransactionList(_userTransactions, _deleteTransaction),
     );
 
-//
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            if (isLandscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Show Chart'),
-                  Switch(
-                      activeColor: const Color.fromARGB(255, 47, 147, 160),
-                      value: _showChart,
-                      onChanged: (val) {
-                        setState(() {
-                          _showChart = val;
-                        });
-                      }),
-                ],
-              ),
-            /*Calling chart class / with only 7 days 
-            because I used here _receneTransaction which is used for
-            Print seven days chart.  That get methode shown above*/
-            if (!isLandscape)
-              SizedBox(
+// build widget(LandSacape) which is used for readeble code and clear code
+    List<Widget> _buildLandscapeContent(Widget txListWidget) {
+      return [
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Text('Show Chart'),
+          Switch.adaptive(
+              activeColor: const Color.fromARGB(255, 47, 147, 160),
+              value: _showChart,
+              onChanged: (val) {
+                setState(() {
+                  _showChart = val;
+                });
+              }),
+        ]),
+        _showChart
+            ? SizedBox(
                 height: (mediaQuery.size.height -
                         appBar.preferredSize.height -
                         mediaQuery.padding.top) *
-                    0.25,
+                    0.7,
                 child: Chart(_recentTransactions),
-              ),
-            if (!isLandscape) txListWidget,
-            if (isLandscape)
-              _showChart
-                  ? SizedBox(
-                      height: (mediaQuery.size.height -
-                              appBar.preferredSize.height -
-                              mediaQuery.padding.top) *
-                          0.7,
-                      child: Chart(_recentTransactions),
-                    )
-                  : txListWidget
-          ],
+              )
+            : txListWidget
+      ];
+    }
+
+// This Widget(Potrait) is used for readeble ans clean code
+    List<Widget> _buildPotraitContent(Widget txListWidget) {
+      return [
+        SizedBox(
+          height: (mediaQuery.size.height -
+                  appBar.preferredSize.height -
+                  mediaQuery.padding.top) *
+              0.25,
+          child: Chart(_recentTransactions),
         ),
+        txListWidget
+      ];
+    }
+
+    // page body
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (isLandscape)
+                ..._buildLandscapeContent(
+                  txListWidget,
+                ),
+
+              /*Calling chart class / with only 7 days 
+            because I used here _receneTransaction which is used for
+            Print seven days chart.  That get methode shown above*/
+              if (!isLandscape)
+                ..._buildPotraitContent(
+                  txListWidget,
+                ),
+            ]),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-          onPressed: () => _startAddNewTransaction(context),
-          child: const Icon(Icons.add),
-          backgroundColor: Theme.of(context).colorScheme.secondary),
     );
+
+//
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            child: pageBody,
+            navigationBar: appBar,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: pageBody,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isIOS
+                ? Container()
+                : FloatingActionButton(
+                    onPressed: () => _startAddNewTransaction(context),
+                    child: const Icon(Icons.add),
+                    backgroundColor: Theme.of(context).colorScheme.secondary),
+          );
   }
 }

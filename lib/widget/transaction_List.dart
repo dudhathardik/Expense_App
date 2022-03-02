@@ -1,5 +1,5 @@
+import 'package:demo/widget/transaction_item.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../model/transaction.dart';
 
 class TransactionList extends StatelessWidget {
@@ -33,7 +33,7 @@ class TransactionList extends StatelessWidget {
                       height: constraints.maxHeight * 0.6,
                       child: Image.asset(
                         'asset/image/hardik.jpg',
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
@@ -41,50 +41,18 @@ class TransactionList extends StatelessWidget {
               );
             }),
           )
-        : ListView.builder(
-            itemBuilder: (ctx, index) {
-              return Card(
-                elevation: 5,
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-                // color: Color.fromARGB(255, 233, 236, 236),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: const Color.fromARGB(255, 47, 147, 160),
-                    foregroundColor: Colors.white,
-                    radius: 30,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: FittedBox(
-                          child: Text('\$${transactions[index].amount}')),
-                    ),
-                  ),
-                  title: Text(
-                    transactions[index].title,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  subtitle: Text(
-                    DateFormat.yMMMd().format(transactions[index].date),
-                  ),
-                  trailing: MediaQuery.of(context).size.width > 500
-                      ? TextButton.icon(
-                          icon: const Icon(Icons.delete),
-                          label: const Text('Delete'),
-                          style: TextButton.styleFrom(
-                              primary: Theme.of(context).errorColor),
-                          onPressed: () => deleteTx(transactions[index].id),
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.delete),
-                          color: Theme.of(context).errorColor,
-                          onPressed: () => deleteTx(transactions[index].id),
-                        ),
-                ),
-              );
-            },
-            itemCount: transactions.length,
-          );
+        : ListView(
+            children: transactions
+                .map((tx) => TransactionItem(
+                      key: ValueKey(tx.id),
+                      transaction: tx,
+                      deleteTx: deleteTx,
+                    ))
+                .toList());
   }
 }
+
+
 
 // Container(
 //                   height: 80,

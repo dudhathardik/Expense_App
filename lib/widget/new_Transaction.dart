@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'adaptive_Flate_Button.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function addTx;
@@ -72,7 +73,6 @@ class _NewTransactionState extends State<NewTransaction> {
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Title',
-                  // hintText: 'Enter you Name'
                 ),
                 // onChanged: (value) {
                 //   titleInput = value;
@@ -86,7 +86,6 @@ class _NewTransactionState extends State<NewTransaction> {
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Amount',
-                  // hintText: 'Enter Your Email'
                 ),
                 // onChanged: (val) => amountInput = val,
 
@@ -112,17 +111,7 @@ class _NewTransactionState extends State<NewTransaction> {
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: _PresentDatePicker,
-                      child: const Text(
-                        'Choose Date',
-                        style: TextStyle(
-                          fontFamily: 'BalsamiqSans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    AdaptiveFlateButton('Choose Date', _PresentDatePicker)
                   ],
                 ),
               ),
